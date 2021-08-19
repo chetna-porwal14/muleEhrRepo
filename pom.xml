@@ -52,7 +52,7 @@
 					<classifier>mule-application</classifier>
 				</configuration>
 			</plugin>
-			<plugin>
+			<!-- <plugin>
 				<groupId>com.mulesoft.munit.tools</groupId>
 				<artifactId>munit-maven-plugin</artifactId>
 				<version>${munit.version}</version>
@@ -74,7 +74,7 @@
 						</formats>
 					</coverage>
 				</configuration>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 
