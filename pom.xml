@@ -42,7 +42,7 @@
 						<workerType>Micro</workerType>
 						<environment>Sandbox</environment>
 						<muleVersion>4.3.0</muleVersion>
-						<applicationName>CG-mule-hl7-poc-api</applicationName>
+						<applicationName>CGcp-mule-hl7-poc-api</applicationName>
 						<properties>
 							<anypoint.platform.client_id>079c6330fb0745ab87e1fb0b5caedf25</anypoint.platform.client_id>
 							<anypoint.platform.client_secret>B742637f4eaA4f2887F9830aeaC13Fa9</anypoint.platform.client_secret>
