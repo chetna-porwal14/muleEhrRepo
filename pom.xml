@@ -44,8 +44,8 @@
 						<muleVersion>4.3.0</muleVersion>
 						<applicationName>CG-mule-hl7-poc-api</applicationName>
 						<properties>
-							<anypoint.platform.client_id>f4b12ed36ec54763b633daccd05a147f</anypoint.platform.client_id>
-							<anypoint.platform.client_secret>6a98DE81F94c4f1784f89cf2ffF4B019</anypoint.platform.client_secret>
+							<anypoint.platform.client_id>079c6330fb0745ab87e1fb0b5caedf25</anypoint.platform.client_id>
+							<anypoint.platform.client_secret>B742637f4eaA4f2887F9830aeaC13Fa9</anypoint.platform.client_secret>
 						</properties>
 					</cloudHubDeployment>
 
