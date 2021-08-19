@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:hl7="http://www.mulesoft.org/schema/mule/hl7" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/hl7 http://www.mulesoft.org/schema/mule/hl7/current/mule-hl7.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="1dcb2d0a-ca67-4e3d-a3cb-ba754c5ca533" >
+		<file:connection workingDir="C:\Users\ditiwari\AnypointStudio\workspace-2\ehr\src\main\resources\Output" />
+	</file:config>
+	<sub-flow name="CheckIfPersonAccountExists" doc:id="84f582ef-80f1-417b-82c4-8f4cb6cd7c44" >
+		<set-variable value='#[%dw 2.0
+output application/java
+var ID = message.payload.Id
+var PID=message.payload.Data[ID].PID
+---
+(((PID."PID-03"."CX-01")[0]) default ((PID."PID-03"."CM_PAT_ID-01")[0])) default null]' doc:name="Set Variable sourceSystemId" doc:id="dc17ec46-e8a9-462a-b12b-c4191232f3c1" variableName="sourceSystemId" />
+		<set-variable value='#[%dw 2.0
+output application/java
+---
+payload.MSH."MSH-10"]' doc:name="Set Variable messageControlNumber" doc:id="944eb20f-5e14-4a57-9b40-99e7e8e0f66b" variableName="messageControlNumber" />
+		<salesforce:query doc:id="1e598496-4e9e-4277-9c01-d87835767bf8" config-ref="Salesforce_Config" target="existingPersonAccountId" targetValue="#[payload[0].Id]" doc:name="Check If Person Account Exists">
+			<salesforce:salesforce-query><![CDATA[SELECT Id 
+FROM Account
+WHERE HealthCloudGA__SourceSystemId__c = ':sourceSystemId' LIMIT 1]]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"sourceSystemId" : vars.sourceSystemId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Check If EHR Patient Exists" doc:id="a3066226-b7db-40e8-a749-ffc0d4763927">
+			<when expression="#[vars.existingPersonAccountId != null]">
+				<salesforce:query doc:name="Check If EHR Patient Exists" doc:id="ea6efca8-fa48-495f-8ae6-d9689861d79c" config-ref="Salesforce_Config" target="existingEHRPatientId" targetValue="#[payload[0].Id]">
+					<salesforce:salesforce-query><![CDATA[SELECT Id 
+FROM HealthCloudGA__EhrPatient__c
+WHERE HealthCloudGA__Account__c = ':personAccountId' LIMIT 1]]></salesforce:salesforce-query>
+					<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"personAccountId" : vars.existingPersonAccountId
+}]]]></salesforce:parameters>
+				</salesforce:query>
+			</when>
+			<otherwise>
+				<set-variable value="#[null]" doc:name="Set Variable existingEHRPatientId" doc:id="5abaf62a-0d2f-4582-8efc-ed11e19ca9ba" variableName="existingEHRPatientId" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<flow name="implementation-hl7" doc:id="f87f17c8-5a90-4499-9dea-c1707853ecfb" >
+		<set-variable value="#[message.payload]" doc:name="Save Payload" doc:id="91453be5-d576-4334-9270-6b0c9ae6e276" variableName="hl7Payload" />
+		<hl7:read doc:id="94aea928-7bca-436f-a2aa-c026e42e38e0" config-ref="HL7_EDI_Config_V2_3" doc:name="HL7 Message" />
+		<ee:transform doc:name="Prepare Acknowledgement" doc:id="8afcb6cc-0dcf-4b07-a9ca-db5c6540bcc9" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_2/Acknowledgement.dwl" variableName="acknowledgement" />
+			</ee:variables>
+		</ee:transform>
+		<amqp:publish doc:id="0366a425-e2c8-4c6e-bd4c-868c8d108eca" config-ref="AMQP_Config" exchangeName="amq.topic" doc:name="Publish-to-amqtopic" >
+			<amqp:message >
+				<amqp:body ><![CDATA[#[vars.hl7Payload]]]></amqp:body>
+			</amqp:message>
+		</amqp:publish>
+		<hl7:write doc:id="4bb5ca36-41b5-4add-a9d1-1c4c72230f6f" config-ref="HL7_EDI_Config_V2_3" doc:name="Acknowldegement" >
+			<hl7:write-content ><![CDATA[#[vars.acknowledgement]]]></hl7:write-content>
+		</hl7:write>
+		<logger level="INFO" doc:name="Logger" doc:id="75a2fff7-c322-4193-8320-6500e696481c" message="log Ack"/>
+	</flow>
+	<flow name="implementation-hl7-process" doc:id="ac25dbc7-f96d-4292-a17f-c604e0e02f70" >
+		<amqp:listener doc:id="18a396c6-b4c0-4194-b217-8470aa1f6757" config-ref="AMQP_Config" queueName="Test" doc:name="Listen-to-demoQueue" />
+		<hl7:read doc:id="e1b87ea4-0ecd-4a56-9e69-f0443362b66e" config-ref="HL7_EDI_Config_V2_3" doc:name="Read" />
+		<flow-ref doc:name="implementation-prepare-hc-request" doc:id="67108c9a-4abb-4c58-ab4f-7a543d1f6f71" name="implementation-prepare-hc-request" />
+		<salesforce-composite:execute-composite-request doc:id="c8ed9f0a-7dd7-4f6c-816a-8acb87ab7b9b" config-ref="Salesforce_Composite_Config" doc:name="Execute composite request" />
+		<logger level="INFO" doc:name="payload" doc:id="fd110263-1f60-47fb-8f52-9045edc6780e" message="#[payload]"/>
+	</flow>
+	<sub-flow name="implementation-prepare-hc-request" doc:id="d7085055-4860-4cab-b84b-a9855bf9a3b0" >
+		<flow-ref doc:name="CheckIfPersonAccountExists" doc:id="3adce53d-afdf-46ca-98c9-ff1f275f03ed" name="CheckIfPersonAccountExists"/>
+		<ee:transform doc:name="Prepare Person Account" doc:id="1361f618-6e55-4605-a16f-728039e40b10" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/Account.dwl" variableName="account" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare EHR Patient" doc:id="21031ca2-14e8-4880-bf73-e77a8a28b53b" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/EHRPatient.dwl" variableName="ehrPatient" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Patient Allergy" doc:id="9510c565-18eb-48c1-9f4e-1271ab26ca46" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/EHRPatientAllergy.dwl" variableName="ehrPatientAllergy" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Patient Observation" doc:id="755eff38-8e05-453d-930a-d13fef4d6f73" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/EHRPatientObservation.dwl" variableName="ehrObservation" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Patient Visit" doc:id="aa50fe1a-ef75-489f-8ecb-8f389a313646" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/EHRPatientVisit.dwl" variableName="ehrPatientVisit" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="[NOT USED] Prepare Visit Participant" doc:id="079ffd3b-5e72-4077-a70a-03d62164ee5c" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dw/hl7/v2_3/EHRParticipant.dwl" variableName="ehrParticipant" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Composite Request" doc:id="4b3fe850-2a19-48d8-aa88-c09f90d6f7cc" >
+			<ee:message >
+				<ee:set-payload resource="dw/compositeRequest.dwl" />
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+	</sub-flow>
+</mule>

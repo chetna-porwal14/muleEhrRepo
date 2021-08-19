@@ -1,0 +1,14 @@
+http:
+  port: "8081"
+      
+amqp:
+  host: 'localhost'
+  vhost: '/'
+  user: 'guest'
+  password: 'guest'
+    
+sfdc:
+  username: "cporwal04-d45t@force.com"
+  password: "Salesforcehealth@2020"
+  ckey: "3MVG9fe4g9fhX0E4pd3rvWTeeXKVxDWo0_iiMjNH83HiPswbAAyR6KOYR9ZwxTq816_ha247rjB6fu.3LQvGb"
+  csecret: "344E0D97B3AAEEE834E5C0057F811F91FF300852A447E58F6DB20BE9479DA7E7"

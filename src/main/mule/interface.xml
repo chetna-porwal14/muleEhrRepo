@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="interfaceFlow" doc:id="d89ca075-2d5e-4656-a261-de6cff0e7029" >
+		<http:listener doc:name="POST /ehr" doc:id="13033ef7-fd3e-4578-adc2-70b902f49fe8" config-ref="HTTP_Listener_config" path="/ehr" allowedMethods="POST"/>
+		<flow-ref doc:name="implementation-hl" doc:id="2d91bd25-78d3-4142-9690-b2e54cecb173" name="implementation-hl7"/>
+	</flow>
+</mule>

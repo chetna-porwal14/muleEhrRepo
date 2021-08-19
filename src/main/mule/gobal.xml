@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite"
+	xmlns:hl7="http://www.mulesoft.org/schema/mule/hl7"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/hl7 http://www.mulesoft.org/schema/mule/hl7/current/mule-hl7.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<hl7:config name="HL7_EDI_Config_V2_3"
+		doc:name="HL7 EDI Config"
+		doc:id="8b8a5197-e97b-4996-b8ab-2c9b18323cf4"
+		eventMessageMap="config/hl7/v2_3/event-message.yaml">
+		<hl7:connection>
+			<reconnection>
+				<reconnect />
+			</reconnection>
+		</hl7:connection>
+		<hl7:schemas>
+			<hl7:schema value="/hl7lax/v2_3/ADT_A04.esl" />
+			<hl7:schema value="/hl7lax/v2_3/ADT_A28.esl" />
+			<hl7:schema value="/hl7lax/v2_3/ADT_A08.esl" />
+			<hl7:schema value="/hl7lax/v2_3/ORU_R01.esl" />
+			<hl7:schema value="/hl7lax/v2_3/ADT_A31.esl" />
+		
+</hl7:schemas>
+	</hl7:config>
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="07e81f33-b0a6-40a8-a1fa-83e6aca4cbde" file="config.yaml" />
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="6c02d64c-4b83-4a06-b3ec-e4cb35dc1c01">
+		<http:listener-connection host="0.0.0.0"
+			port="${http.port}" />
+	</http:listener-config>
+	<amqp:config name="AMQP_Config" doc:name="AMQP Config" doc:id="1e24599f-b05c-45c3-bd11-6ebb2e54a66f" >
+		<amqp:connection host="${amqp.host}" virtualHost="${amqp.vhost}" username="${amqp.user}" password="${amqp.password}" />
+	</amqp:config>
+	<salesforce-composite:composite-config name="Salesforce_Composite_Config" doc:name="Salesforce Composite Config" doc:id="60352ec1-3a0d-444c-8de8-4b9b2153c35d" >
+		<salesforce-composite:oauth-user-pass-connection consumerKey="3MVG9fe4g9fhX0E5l6GlAg9fNQBB1EC3x61tXJR8smwJ22dFzepkZKZPmrPp646nC9PUCFd3wQ2J0YQaoeRu_" consumerSecret="8E836E528A926EA973A15DA726E2076C831D86B63A3978380BB10A1239035E99" username="${sfdc.username}" password="${sfdc.password}" />
+	</salesforce-composite:composite-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="d9180b02-90b1-4746-a820-e0dae9105ef6" >
+		<salesforce:basic-connection username="dimple.tiwari-ny6p@force.com" password="Asdfghjkl12!" securityToken="ESqT0Fovrnt1pgFlbHYgUh0i" />
+	</salesforce:sfdc-config>
+	<configuration doc:name="Configuration" doc:id="1564ff9f-192d-495e-a4f4-64a0a5a36505" defaultErrorHandler-ref="gobalError_Handler" />
+	<error-handler name="gobalError_Handler" doc:id="61d57b3b-e5f7-4f79-89ed-5504e07c9a18" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="97c8ad88-3b32-47f5-a222-2603999071db" >
+			<logger level="INFO" doc:name="error.description" doc:id="f2b3bacc-a8b2-4076-b2d4-96e94e7100f6" message="#[error.description]"/>
+		</on-error-propagate>
+	</error-handler>
+
+
+
+
+
+
+
+</mule>
